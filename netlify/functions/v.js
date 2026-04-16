@@ -22,18 +22,15 @@ exports.handler = async (event, context) => {
   <meta charset="utf-8">
   <title>${data.t || "Embed"}</title>
   
-  <!-- Discordの画像表示に必須のタグ -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="${data.a || ""}" />
   <meta property="og:title" content="${data.t || ""}" />
   <meta property="og:description" content="${data.d || ""}" />
   
-  <!-- 画像URLに絶対パスを保証 -->
+  <!-- 画像URLのみを指定し、サイズ指定を削除 -->
   <meta property="og:image" content="${imageUrl}" />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
   
-  <!-- Twitter Card (Discordの大きな画像表示に必要) -->
+  <!-- 大きな画像を表示させるための設定 -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="${imageUrl}">
   
