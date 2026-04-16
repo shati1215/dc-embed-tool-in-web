@@ -1,0 +1,4 @@
+[[redirects]]
+  from = "/v"
+  to = "/.netlify/functions/v"
+  status = 200
