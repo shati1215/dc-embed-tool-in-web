@@ -238,15 +238,15 @@
             u: el['in-url'].value
         };
 
-        // 1. JSONにしてBase64にする (日本語対応)
-        let base64 = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+        // 1. JSONにしてBase64にする
+        const jsonStr = JSON.stringify(data);
+        const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
         
-        // 2. URLでエラーにならないように文字を置換
-        // これをやらないと is.gd や Netlify でデータが壊れます
-        base64 = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        // 2. URLセーフに変換
+        const safeBase64 = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
-        // 3. 自分のサイトの /v?d=... を作る
-        const longUrl = `${window.location.origin}/v?d=${base64}`;
+        // 3. 【修正】さらに全体を encodeURIComponent で囲む
+        const longUrl = `${window.location.origin}/v?d=${encodeURIComponent(safeBase64)}`;
         
         const resDiv = document.getElementById('result-url');
         resDiv.style.display = 'block';
@@ -258,7 +258,7 @@
             const finalUrl = json.shorturl || longUrl;
             resDiv.innerHTML = `完成！<br><br><a href="${finalUrl}" style="color:var(--google-blue); text-decoration:none;">${finalUrl}</a>`;
         } catch (e) {
-            resDiv.innerText = "短縮失敗。長いURL:\n" + longUrl;
+            resDiv.innerText = "短縮に失敗しました。";
         }
     }
 </script>
