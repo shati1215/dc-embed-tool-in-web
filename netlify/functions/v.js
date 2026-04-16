@@ -1,25 +1,25 @@
 exports.handler = async (event, context) => {
-  // URLからデータ (?d=...) を取得
+  // URLの ?d= 以降を取得
   let encodedData = event.queryStringParameters.d;
 
   if (!encodedData) {
-    return {
-      statusCode: 400,
-      body: "データが見つかりません。"
-    };
+    return { statusCode: 400, body: "データがありません。" };
   }
 
   try {
-    // 1. URLセーフな記号をもとに戻す (- -> +, _ -> /)
+    // 1. URLセーフな文字を元に戻す (- -> +, _ -> /)
     let base64 = encodedData.replace(/-/g, '+').replace(/_/g, '/');
     
-    // 2. Base64をデコードしてJSONに戻す (Node.jsのBufferを使用)
+    // 2. Node.jsのBufferを使って一気にデコード
+    // Buffer.from は Base64 をバイナリ（データそのもの）に戻し、
+    // .toString('utf-8') で日本語として正しく読み取ります。
     const buffer = Buffer.from(base64, 'base64');
-    const jsonText = decodeURIComponent(escape(buffer.toString()));
+    const jsonText = buffer.toString('utf-8');
+    
+    // 3. JSONに変換
     const data = JSON.parse(jsonText);
 
-    // 3. Discordに読ませるHTMLを生成
-    // ※ プレビューを豪華にするため og:image と twitter:image 両方を設定
+    // 4. Discord用のHTMLを生成
     const html = `
 <!DOCTYPE html>
 <html lang="ja">
@@ -32,18 +32,11 @@ exports.handler = async (event, context) => {
   <meta property="og:image" content="${data.im || data.th || ""}" />
   <meta name="theme-color" content="#${data.c || "8ab4f8"}" />
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="${data.im || data.th || ""}">
-  <style>
-    body { background: #202124; color: #e8eaed; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; flex-direction: column; }
-    .loader { border: 4px solid #3c4043; border-top: 4px solid #8ab4f8; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin-bottom: 20px; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-  </style>
 </head>
-<body>
-  <div class="loader"></div>
-  <p>リダイレクト中...</p>
+<body style="background:#202124; color:#e8eaed; font-family:sans-serif; display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; margin:0; text-align:center; padding: 20px;">
+  <p>読み込み中...</p>
   <script>
-    // URLがあればそこに飛ばす。なければトップに戻す。
+    // 指定URLがあればリダイレクト、なければトップへ
     const target = "${data.u}" || "/";
     setTimeout(() => { location.href = target; }, 500);
   </script>
@@ -56,11 +49,11 @@ exports.handler = async (event, context) => {
       body: html
     };
   } catch (e) {
-    // エラー時はログを出して原因を特定しやすくする
     console.error("Decode Error:", e);
+    // 失敗した場合、どんなデータが届いていたかを画面に出してデバッグしやすくする
     return { 
       statusCode: 500, 
-      body: "Error: データの復元に失敗しました。URLが長すぎるか、壊れている可能性があります。" 
+      body: "Error: データの解読に失敗しました。データの一部: " + encodedData.substring(0, 20) + "..."
     };
   }
 };
