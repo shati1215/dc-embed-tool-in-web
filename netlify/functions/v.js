@@ -1,25 +1,23 @@
 exports.handler = async (event, context) => {
-  // URLの ?d= 以降を取得
   let encodedData = event.queryStringParameters.d;
 
-  if (!encodedData) {
-    return { statusCode: 400, body: "データがありません。" };
-  }
+  if (!encodedData) return { statusCode: 400, body: "No data" };
 
   try {
-    // 1. URLセーフな文字を元に戻す (- -> +, _ -> /)
-    let base64 = encodedData.replace(/-/g, '+').replace(/_/g, '/');
-    
-    // 2. Node.jsのBufferを使って一気にデコード
-    // Buffer.from は Base64 をバイナリ（データそのもの）に戻し、
-    // .toString('utf-8') で日本語として正しく読み取ります。
+    // 【最重要修正】URLで化けてしまった文字をすべてBase64の標準記号に戻す
+    // 1. 空白を "+" に戻す
+    // 2. "-" を "+" に戻す
+    // 3. "_" を "/" に戻す
+    let base64 = encodedData.replace(/ /g, '+').replace(/-/g, '+').replace(/_/g, '/');
+
+    // Node.jsのBufferを使ってBase64をデコード（UTF-8指定で日本語もOK）
     const buffer = Buffer.from(base64, 'base64');
     const jsonText = buffer.toString('utf-8');
     
-    // 3. JSONに変換
+    // JSONとして読み込み
     const data = JSON.parse(jsonText);
 
-    // 4. Discord用のHTMLを生成
+    // Discord用のHTMLを生成
     const html = `
 <!DOCTYPE html>
 <html lang="ja">
@@ -33,10 +31,9 @@ exports.handler = async (event, context) => {
   <meta name="theme-color" content="#${data.c || "8ab4f8"}" />
   <meta name="twitter:card" content="summary_large_image">
 </head>
-<body style="background:#202124; color:#e8eaed; font-family:sans-serif; display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; margin:0; text-align:center; padding: 20px;">
+<body style="background:#202124; color:#e8eaed; font-family:sans-serif; display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; margin:0; text-align:center;">
   <p>読み込み中...</p>
   <script>
-    // 指定URLがあればリダイレクト、なければトップへ
     const target = "${data.u}" || "/";
     setTimeout(() => { location.href = target; }, 500);
   </script>
@@ -50,10 +47,9 @@ exports.handler = async (event, context) => {
     };
   } catch (e) {
     console.error("Decode Error:", e);
-    // 失敗した場合、どんなデータが届いていたかを画面に出してデバッグしやすくする
     return { 
       statusCode: 500, 
-      body: "Error: データの解読に失敗しました。データの一部: " + encodedData.substring(0, 20) + "..."
+      body: "Error: データの解読に失敗しました。URLが壊れているか、文字数が多すぎる可能性があります。" 
     };
   }
 };
