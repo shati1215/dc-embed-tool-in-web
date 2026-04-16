@@ -24,18 +24,30 @@ exports.handler = async (event, context) => {
 <head>
   <meta charset="utf-8">
   <title>${data.t || "Embed"}</title>
+  
+  <!-- 基本のOGP -->
   <meta property="og:site_name" content="${data.a || ""}" />
   <meta property="og:title" content="${data.t || ""}" />
   <meta property="og:description" content="${data.d || ""}" />
+  <meta property="og:type" content="website" />
+  
+  <!-- 画像系：ここを強化 -->
   <meta property="og:image" content="${data.im || data.th || ""}" />
-  <meta name="theme-color" content="#${data.c || "8ab4f8"}" />
+  <meta property="og:image:secure_url" content="${data.im || data.th || ""}" />
+  
+  <!-- Twitterカード：これがないと大きく表示されない場合がある -->
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${data.t || ""}">
+  <meta name="twitter:description" content="${data.d || ""}">
+  <meta name="twitter:image" content="${data.im || data.th || ""}">
+
+  <meta name="theme-color" content="#${data.c || "8ab4f8"}" />
 </head>
 <body style="background:#202124; color:#e8eaed; font-family:sans-serif; display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; margin:0; text-align:center;">
   <p>読み込み中...</p>
   <script>
     const target = "${data.u}" || "/";
-    setTimeout(() => { location.href = target; }, 500);
+    setTimeout(() => { location.href = target; }, 1);
   </script>
 </body>
 </html>`;
