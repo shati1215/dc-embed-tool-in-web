@@ -1,36 +1,51 @@
 exports.handler = async (event, context) => {
-  const encodedData = event.queryStringParameters.d;
+  // URLからデータ (?d=...) を取得
+  let encodedData = event.queryStringParameters.d;
 
   if (!encodedData) {
-    return { statusCode: 400, body: "No data" };
+    return {
+      statusCode: 400,
+      body: "データが見つかりません。"
+    };
   }
 
   try {
-    // Base64を復元 (Node.jsの書き方)
-    const rawData = Buffer.from(encodedData, 'base64').toString();
-    const data = JSON.parse(decodeURIComponent(escape(rawData)));
+    // 1. URLセーフな記号をもとに戻す (- -> +, _ -> /)
+    let base64 = encodedData.replace(/-/g, '+').replace(/_/g, '/');
+    
+    // 2. Base64をデコードしてJSONに戻す (Node.jsのBufferを使用)
+    const buffer = Buffer.from(base64, 'base64');
+    const jsonText = decodeURIComponent(escape(buffer.toString()));
+    const data = JSON.parse(jsonText);
 
-    // Discord用のメタタグを詰め込んだHTMLを生成
+    // 3. Discordに読ませるHTMLを生成
+    // ※ プレビューを豪華にするため og:image と twitter:image 両方を設定
     const html = `
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
   <meta charset="utf-8">
   <title>${data.t || "Embed"}</title>
   <meta property="og:site_name" content="${data.a || ""}" />
   <meta property="og:title" content="${data.t || ""}" />
   <meta property="og:description" content="${data.d || ""}" />
-  <meta property="og:image" content="${data.im || ""}" />
+  <meta property="og:image" content="${data.im || data.th || ""}" />
   <meta name="theme-color" content="#${data.c || "8ab4f8"}" />
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="${data.th || data.im || ""}">
+  <meta name="twitter:image" content="${data.im || data.th || ""}">
+  <style>
+    body { background: #202124; color: #e8eaed; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; flex-direction: column; }
+    .loader { border: 4px solid #3c4043; border-top: 4px solid #8ab4f8; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin-bottom: 20px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
 </head>
-<body style="background:#202124; color:white; font-family:sans-serif; text-align:center; padding-top:50px;">
-  <h1>${data.t || ""}</h1>
-  <p>${data.d || ""}</p>
+<body>
+  <div class="loader"></div>
+  <p>リダイレクト中...</p>
   <script>
-    // 人間がアクセスした場合は、指定されたURLに飛ばす
-    if("${data.u}") { location.href = "${data.u}"; }
+    // URLがあればそこに飛ばす。なければトップに戻す。
+    const target = "${data.u}" || "/";
+    setTimeout(() => { location.href = target; }, 500);
   </script>
 </body>
 </html>`;
@@ -41,6 +56,11 @@ exports.handler = async (event, context) => {
       body: html
     };
   } catch (e) {
-    return { statusCode: 500, body: "Error" };
+    // エラー時はログを出して原因を特定しやすくする
+    console.error("Decode Error:", e);
+    return { 
+      statusCode: 500, 
+      body: "Error: データの復元に失敗しました。URLが長すぎるか、壊れている可能性があります。" 
+    };
   }
 };
