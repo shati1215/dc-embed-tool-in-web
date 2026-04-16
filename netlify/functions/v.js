@@ -45,7 +45,7 @@ exports.handler = async (event, context) => {
   <!-- 人間がアクセスした時だけリダイレクトさせるJS -->
   <script>
     if("${data.u}") {
-      setTimeout(() => { location.href = "${data.u}"; }, 1000);
+      setTimeout(() => { location.href = "${data.u}"; }, 1);
     }
   </script>
 </body>
