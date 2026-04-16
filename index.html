@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Embed Generator</title>
+    <!-- Yusei Magic の読み込み -->
+    <link href="https://fonts.googleapis.com/css2?family=Yusei+Magic&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #202124;
+            --card-bg: #202124;
+            --input-bg: #303134;
+            --text-primary: #e8eaed;
+            --text-secondary: #9aa0a6;
+            --google-blue: #8ab4f8;
+            --border-color: #3c4043;
+            --discord-embed: #2b2d31;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            /* 全体に Yusei Magic を適用 */
+            font-family: 'Yusei Magic', sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 10px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h1 {
+            font-size: 26px;
+            font-weight: 400;
+            text-align: center;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+        }
+
+        /* Preview Section */
+        .preview-box {
+            background: #313338;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .discord-embed {
+            background: var(--discord-embed);
+            border-left: 4px solid var(--google-blue);
+            border-radius: 4px;
+            padding: 12px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            max-width: 100%;
+            /* プレビュー内のフォント設定（Discord本体は独自フォントですが、ここも揃えます） */
+            font-family: 'Yusei Magic', sans-serif;
+        }
+
+        /* Form Section */
+        .form-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .field { margin-bottom: 20px; }
+        .field:last-child { margin-bottom: 0; }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            padding: 12px;
+            font-size: 15px;
+            box-sizing: border-box;
+            outline: none;
+            /* 入力欄にもフォントを適用 */
+            font-family: 'Yusei Magic', sans-serif;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--google-blue);
+        }
+
+        input[type="color"] {
+            width: 50px;
+            height: 35px;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+
+        /* Actions */
+        button {
+            width: 100%;
+            background-color: var(--google-blue);
+            color: #202124;
+            border: none;
+            padding: 16px;
+            border-radius: 25px; /* Googleっぽい丸いボタン */
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            font-family: 'Yusei Magic', sans-serif;
+            transition: opacity 0.2s;
+        }
+
+        button:active { opacity: 0.8; }
+
+        #result-url {
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--input-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            font-size: 14px;
+            word-break: break-all;
+            display: none;
+            text-align: center;
+        }
+
+        /* Embed Elements */
+        .e-author { font-size: 12px; color: #ffffff; margin-bottom: 4px; }
+        .e-title { color: #00a8fc; font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+        .e-desc { font-size: 14px; color: #dbdee1; white-space: pre-wrap; }
+        .e-thumb { width: 80px; height: 80px; border-radius: 4px; object-fit: cover; margin-left: 12px; }
+        .e-img { width: 100%; border-radius: 4px; margin-top: 10px; grid-column: 1 / span 2; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Embed Generator</h1>
+
+    <!-- プレビュー -->
+    <div class="preview-box">
+        <div class="discord-embed" id="pre-border">
+            <div style="grid-column: 1;">
+                <div class="e-author" id="pre-auth">サイト名/作成者</div>
+                <div class="e-title" id="pre-title">タイトル</div>
+                <div class="e-desc" id="pre-desc">ここに説明文が表示されます...</div>
+            </div>
+            <img id="pre-thumb" class="e-thumb" src="" style="display:none">
+            <img id="pre-img" class="e-img" src="" style="display:none">
+        </div>
+    </div>
+
+    <!-- 入力フォーム -->
+    <div class="form-section">
+        <div class="field">
+            <label>作成者 / サイト名 (Author)</label>
+            <input type="text" id="in-auth" placeholder="例: Google Search">
+        </div>
+        <div class="field">
+            <label>タイトル (Title)</label>
+            <input type="text" id="in-title" placeholder="タイトルを入力">
+        </div>
+        <div class="field">
+            <label>タイトルURL (Title URL)</label>
+            <input type="text" id="in-url" placeholder="https://...">
+        </div>
+        <div class="field">
+            <label>説明文 (Description)</label>
+            <textarea id="in-desc" rows="3" placeholder="説明文を入力"></textarea>
+        </div>
+        <div class="field">
+            <label>アクセントカラー (Theme Color)</label>
+            <input type="color" id="in-color" value="#8ab4f8">
+        </div>
+    </div>
+
+    <div class="form-section">
+        <div class="field">
+            <label>サムネイルURL (右上の小さい画像)</label>
+            <input type="text" id="in-thumb" placeholder="https://...">
+        </div>
+        <div class="field">
+            <label>メイン画像URL (中央の大きい画像)</label>
+            <input type="text" id="in-img" placeholder="https://...">
+        </div>
+    </div>
+
+    <button onclick="generate()">リンクを作成する</button>
+
+    <div id="result-url"></div>
+</div>
+
+<script>
+    // ※ ロジックは前回と同様
+    const inputs = ['in-auth', 'in-title', 'in-desc', 'in-color', 'in-thumb', 'in-img', 'in-url'];
+    const el = {};
+    inputs.forEach(id => el[id] = document.getElementById(id));
+
+    function update() {
+        document.getElementById('pre-auth').innerText = el['in-auth'].value || 'サイト名/作成者';
+        document.getElementById('pre-title').innerText = el['in-title'].value || 'タイトル';
+        document.getElementById('pre-desc').innerText = el['in-desc'].value || 'ここに説明文が表示されます...';
+        document.getElementById('pre-border').style.borderColor = el['in-color'].value;
+        
+        const thumb = document.getElementById('pre-thumb');
+        if(el['in-thumb'].value) { thumb.src = el['in-thumb'].value; thumb.style.display = 'block'; }
+        else { thumb.style.display = 'none'; }
+
+        const img = document.getElementById('pre-img');
+        if(el['in-img'].value) { img.src = el['in-img'].value; img.style.display = 'block'; }
+        else { img.style.display = 'none'; }
+    }
+
+    inputs.forEach(id => el[id].addEventListener('input', update));
+
+    async function generate() {
+        const data = {
+            a: el['in-auth'].value,
+            t: el['in-title'].value,
+            d: el['in-desc'].value,
+            c: el['in-color'].value.replace('#', ''),
+            th: el['in-thumb'].value,
+            im: el['in-img'].value,
+            u: el['in-url'].value
+        };
+
+        const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+        // viewerUrl は自分の公開ドメインに合わせて調整してね
+        const longUrl = `${window.location.origin}/v?d=${base64}`;
+        
+        const resDiv = document.getElementById('result-url');
+        resDiv.style.display = 'block';
+        resDiv.innerText = '短縮URLを生成中...';
+
+        try {
+            const res = await fetch(`https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}`);
+            const json = await res.json();
+            const finalUrl = json.shorturl || longUrl;
+            resDiv.innerHTML = `リンクが完成しました！<br><br><a href="${finalUrl}" style="color:var(--google-blue); text-decoration:none;">${finalUrl}</a>`;
+        } catch (e) {
+            resDiv.innerText = "短縮に失敗しました。長いURL:\n" + longUrl;
+        }
+    }
+</script>
+</body>
+</html>
