@@ -238,8 +238,13 @@
             u: el['in-url'].value
         };
 
-        const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-        // viewerUrl は自分の公開ドメインに合わせて調整してね
+        // 1. JSONをBase64化
+        let base64 = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+        
+        // 2. 【重要】URLでバグらないように記号を置き換える
+        base64 = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+        // 3. 自サイトの /v?d=... にデータを乗せる
         const longUrl = `${window.location.origin}/v?d=${base64}`;
         
         const resDiv = document.getElementById('result-url');
